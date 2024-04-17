@@ -1,4 +1,5 @@
 import os
+from argparse import ArgumentParser
 
 from zipfile import ZipFile
 from unrar.rarfile import RarFile
@@ -31,5 +32,8 @@ class ZIP:
                     pass
 
 if __name__ == '__main__':
-    dir = input('Enter the directory: ')
-    ZIP(dir).main()
+    parser = ArgumentParser()
+    parser.add_argument('dir', help='Directory to extract the files')
+    args = parser.parse_args()
+
+    ZIP(args.dir).main()
