@@ -1,39 +1,31 @@
 import os
 from argparse import ArgumentParser
 
-from zipfile import ZipFile
-from unrar.rarfile import RarFile
-from py7zr import SevenZipFile
+from pathlib import Path
+from patoolib import extract_archive
 
-class ZIP:
-    def __init__(self, dir):
-        self.dir = dir
-        self.folder = [folder for folder in os.listdir(dir) if not folder.startswith('.')]
 
-        self.func_type = {
-            'zip': ZipFile,
-            'rar': RarFile,
-            '7z': SevenZipFile,
-        }
+def scan_recursive(base_dir):
+    for entry in os.scandir(base_dir):
+        if entry.is_dir(follow_symlinks=False):
+            yield from scan_recursive(entry.path)  # see below for Python 2.x
+        elif entry.path.endswith('.zip') or entry.path.endswith('.rar') or entry.path.endswith('.7z'):
+            yield entry
 
-    def main(self):
-        for folder in self.folder:
-            for file in os.listdir(self.dir + '/' + folder):
-                folder_dir = self.dir + '/' + folder
-                file_dir = folder_dir + '/' + file
-
-                try:
-                    file_type = file.split('.')[-1]
-
-                    with self.func_type[file_type](file_dir, 'r') as archive:
-                        archive.extractall(folder_dir)
-                        print(f'{file:50} extracted successfully')
-                except:
-                    pass
-
-if __name__ == '__main__':
+def main():
     parser = ArgumentParser()
     parser.add_argument('dir', help='Directory to extract the files')
     args = parser.parse_args()
 
-    ZIP(args.dir).main()
+    zip_files = [entry.path for entry in scan_recursive(args.dir)]
+
+    for file in zip_files:
+        try:
+            folder = Path(file).parent
+            extract_archive(file, outdir=folder)
+        except Exception as e:
+            print(f'Error extracting {file}: {e}')
+            pass
+
+if __name__ == '__main__':
+    main()

@@ -1,2 +1,1 @@
-py7zr
-unrar
+patoolib
